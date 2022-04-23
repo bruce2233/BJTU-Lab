@@ -1,10 +1,13 @@
 package lab1
 
-import "io/ioutil"
+import (
+	"regexp"
+)
 
 var (
 	ruleFile  = "rule.txt"
 	inputFile = "code.txt"
+	regs      = []string{"a+"}
 )
 
 type FSM struct {
@@ -23,11 +26,10 @@ func (node Node) transfer(inputString string) {
 	println("get", input, "transfer from a to b")
 }
 
-func (fsm *FSM) loadNodes() {
-	bytes, err := ioutil.ReadFile(inputFile)
-	if err !=nil{
-		panic("nodes file err")
+func (fsm *FSM) loadRegs() {
+	matched, err := regexp.Match(regs[0], []byte("aaa"))
+	if err != nil {
+		println("compile reg err")
 	}
-	inputString := string(bytes)
-	println(inputString)
+	println(matched)
 }
