@@ -1,9 +1,21 @@
-#include <iostream>
-#include <vector>
+#include<iostream>
+#include<cstring>
+#include<vector>
+#include <unistd.h>
+#include <iterator>
 using namespace std;
+void test2(){
+    vector<int> list(100);
+    while(true){
+        list.push_back(1);
+        std::cout << &list[0] << std::endl;
+        sleep(1);
+    }
+}
+
 int main()
 {
-   
+   test2();
     // B b;
     // b.run();
 }
@@ -22,6 +34,7 @@ public:
     }
 };
 
+
 void test1(){
      vector<int> v;  //v是存放int类型变量的可变长数组，开始时没有元素
     // for (int n = 0; n<5; ++n)
@@ -39,5 +52,4 @@ void test1(){
     //用反向迭代器遍历容器
     for (vector<int>::reverse_iterator j = v.rbegin(); j != v.rend(); ++j)
         cout << *j << " ";
-    return 0;
 }

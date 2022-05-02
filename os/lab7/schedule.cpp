@@ -18,9 +18,13 @@ public:
     int pid;
     int status;
     void run();
+    void stop();
 };
 void Process::run(){
         std::cout << "process " <<this->pid<<" is running..." << std::endl;
+}
+void Process::stop(){
+    std::cout << "process "<<this->pid <<" stops"<< std::endl;
 }
 
 class ISchedule {
@@ -78,20 +82,25 @@ void ScheduleTimeSlice::call(){
 int main(int argc, const char** argv) {
     // ScheduleWithTaskList schedule;
     ScheduleTimeSlice schedule;
-    
+    schedule.task_queue.reserve(100);
     Process p1;
     p1.pid=888;
     Process p2;
     p2.pid=7;
+    Process* px;
     schedule.set_clock(TIME_SLICE);
     schedule.add_task(&p1);
     schedule.add_task(&p2);
     schedule.it = schedule.task_queue.begin();
+    int i=0;
     while(true){
         schedule.call();
         sleep(TIME_SLICE/1000);
-        Process px;
-        schedule.add_task(&px);
+        px = new Process;
+        px->pid = i++;
+        if(i <= 3){
+        schedule.add_task(px);
+        }
         schedule.inter_call();
     }
     return 0;
