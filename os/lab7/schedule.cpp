@@ -2,18 +2,11 @@
 #include<cstring>
 #include<vector>
 #include <unistd.h>
+#include <iterator>
 
 using namespace std;
 
 const int TIME_SLICE = 1500;
-
-class ISchedule {
-public:
-    virtual void interCall() = 0;
-    virtual void addTask() = 0;
-    virtual void call(Process)=0;
-    virtual void setClock(int) = 0;
-};
 
 class ITask{
 public:
@@ -26,51 +19,80 @@ public:
     int status;
     void run();
 };
-
 void Process::run(){
-        std::cout << "process is" <<this->pid<<" running..." << std::endl;
+        std::cout << "process " <<this->pid<<" is running..." << std::endl;
 }
+
+class ISchedule {
+public:
+    virtual void inter_call() = 0;
+    virtual void call(ITask* task)=0;
+    virtual void set_clock(int time) = 0;
+};
 
 class Schedule : public ISchedule{
 public:
-    void setClock(int time){
+    void set_clock(int time);
+    void inter_call();
+    void call(ITask* task);
+};
+void Schedule::set_clock(int time){
         std::cout << "after "<<time<<"ms another task runs" << std::endl;
-    }
+}
 
-    void interCall(){
+void Schedule::call(ITask* task){
+    task->run();
+}
+
+void Schedule::inter_call(){
         std::cout << "called by the clock interupt..." << std::endl;
-    }
+}
 
-     void addTask(){
-        std::cout << "create a task..." << std::endl;
-    }
-
-    void call(Process &process){
-        std::cout << "schedule process..." << process.pid << std::endl;
-    }
-};
-
-class ScheduleWithTaskQueue : public Schedule{
+class ScheduleWithTaskList : public Schedule{
 public:
-    ITask *task_queue[3];
+    vector<ITask *> task_queue;
+    vector<ITask *>::iterator it;
+    void add_task(ITask* task);
 };
+void ScheduleWithTaskList::add_task(ITask* task){
+    this->task_queue.push_back(task);
+}
+
+class ScheduleTimeSlice : public ScheduleWithTaskList{
+public:
+    void call();
+};
+void ScheduleTimeSlice::call(){
+    if(this->task_queue.begin() == this->task_queue.end()){
+        std::cout << "no process" << std::endl;
+    }else{
+        ITask* task = *it;
+        this->Schedule::call(task);
+        it++;
+        if(it == task_queue.end()){
+            it=task_queue.begin();
+        }
+    }
+}
 
 int main(int argc, const char** argv) {
-    ScheduleWithTaskQueue schedule;
-    // ISchedule * sc;
-    // sc = &swtq;
+    // ScheduleWithTaskList schedule;
+    ScheduleTimeSlice schedule;
     
     Process p1;
     p1.pid=888;
-    // schedule.task_queue.push_back(&p1);
-    schedule.task_queue[0]= &p1;
-
+    Process p2;
+    p2.pid=7;
+    schedule.set_clock(TIME_SLICE);
+    schedule.add_task(&p1);
+    schedule.add_task(&p2);
+    schedule.it = schedule.task_queue.begin();
     while(true){
-        schedule.setClock(TIME_SLICE);
-        schedule.addTask();
-        
+        schedule.call();
         sleep(TIME_SLICE/1000);
-        schedule.interCall();
+        Process px;
+        schedule.add_task(&px);
+        schedule.inter_call();
     }
     return 0;
 }

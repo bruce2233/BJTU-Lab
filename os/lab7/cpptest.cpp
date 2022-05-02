@@ -1,8 +1,43 @@
-#include<iostream>
+#include <iostream>
+#include <vector>
+using namespace std;
+int main()
+{
+   
+    // B b;
+    // b.run();
+}
 
-int main(){
-    int b =1;
-    int &a = b;
-    a = 2;
-    std::cout << b << std::endl;
+class A{
+public:
+    void run(){
+        cout<<"from A"<<endl;
+    }
+};
+
+class B: public A{
+public:
+    void run(int x){
+        cout<<"from B" <<endl;
+    }
+};
+
+void test1(){
+     vector<int> v;  //v是存放int类型变量的可变长数组，开始时没有元素
+    // for (int n = 0; n<5; ++n)
+    //     v.push_back(n);  //push_back成员函数在vector容器尾部添加一个元素
+    vector<int>::iterator i;  //定义正向迭代器
+    if (v.begin()==v.end()){
+        std::cout << "zere equal" << std::endl;
+    }
+    for (i = v.begin(); i != v.end(); ++i) {  //用迭代器遍历容器
+        cout <<"h" <<endl;
+        cout << *i << " ";  //*i 就是迭代器i指向的元素
+        *i *= 2;  //每个元素变为原来的2倍
+    }
+    cout << endl;
+    //用反向迭代器遍历容器
+    for (vector<int>::reverse_iterator j = v.rbegin(); j != v.rend(); ++j)
+        cout << *j << " ";
+    return 0;
 }
