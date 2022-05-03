@@ -70,12 +70,12 @@ void ScheduleTimeSlice::call(){
     if(this->task_queue.begin() == this->task_queue.end()){
         std::cout << "no process" << std::endl;
     }else{
-        ITask* task = *it;
-        this->Schedule::call(task);
-        it++;
         if(it == task_queue.end()){
             it=task_queue.begin();
         }
+        ITask* task = *it;
+        this->Schedule::call(task);
+        it++;
     }
 }
 
@@ -84,7 +84,7 @@ int main(int argc, const char** argv) {
     ScheduleTimeSlice schedule;
     schedule.task_queue.reserve(100);
     Process p1;
-    p1.pid=888;
+    p1.pid=0;
     Process p2;
     p2.pid=7;
     Process* px;
@@ -98,10 +98,17 @@ int main(int argc, const char** argv) {
         sleep(TIME_SLICE/1000);
         px = new Process;
         px->pid = i++;
-        if(i <= 3){
-        schedule.add_task(px);
+        if(i <= 10){
+            schedule.add_task(px);
         }
         schedule.inter_call();
+        if(rand()%2 ==0 && (Process*)(*(schedule.it))->pid!=0){
+            schedule.task_queue.erase(schedule.it);
+        }
+        std::cout << "Process in queue: " << std::endl;
+        for (ITask* item: schedule.task_queue){
+            std::cout << ((Process*)item)->pid << " ";
+        }
     }
     return 0;
 }
