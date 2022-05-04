@@ -12,10 +12,21 @@ void test2(){
         sleep(1);
     }
 }
+void test3(){
+    vector<int> vec;
+    vec.push_back(0);
+    vec.push_back(1);
+    vector<int>::iterator it = vec.begin();
+    it++;
+    vec.erase(it);
+    vec.erase(it);
+
+}
 
 int main()
 {
-   test2();
+//    test2();
+    test3();
     // B b;
     // b.run();
 }
@@ -53,3 +64,4 @@ void test1(){
     for (vector<int>::reverse_iterator j = v.rbegin(); j != v.rend(); ++j)
         cout << *j << " ";
 }
+
