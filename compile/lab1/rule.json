@@ -1,0 +1,27 @@
+{
+    "tokens": [{
+        "expStr": "\\A[a-zA-Z]+\\w*",
+        "token": "IDENTIFIER"
+    }, {
+        "expStr": "\\A[0-9]+\\w",
+        "token": "UNSIGNEDINT"
+    }, {
+        "expStr": "\\A[\\+\\-\\*\\;\\(\\)\\,\\{\\}]",
+        "token": "SINGLEDELIMITER"
+    }, {
+        "expStr": "^\\s+",
+        "token": "SPACE"
+    }, {
+        "expStr": "\\A<[=>]={0}",
+        "token": "LT"
+    }, {
+        "expStr": "\\A>={0}",
+        "token": "GT"
+    }, {
+        "expStr": "\\A<>",
+        "token": "NE"
+    }, {
+        "expStr": "\\A!=",
+        "token": "NE"
+    }]
+}
