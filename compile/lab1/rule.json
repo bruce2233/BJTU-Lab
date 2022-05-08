@@ -12,10 +12,10 @@
         "expStr": "^\\s+",
         "token": "SPACE"
     }, {
-        "expStr": "\\A<[=>]={0}",
+        "expStr": "(\\A<)(?:[^=>])",
         "token": "LT"
     }, {
-        "expStr": "\\A>={0}",
+        "expStr": "(\\A>)(?:[^=])",
         "token": "GT"
     }, {
         "expStr": "\\A<>",
@@ -23,5 +23,14 @@
     }, {
         "expStr": "\\A!=",
         "token": "NE"
+    }, {
+        "expStr": "(\\A/)(?:[^/*])",
+        "token": "SLASH"
+    }, {
+        "expStr": "\\A//.*\\r\\n",
+        "token": "COMMENT"
+    }, {
+        "expStr": "\\A/\\*[\\s\\S]*\\*/",
+        "token": "COMMENT"
     }]
 }

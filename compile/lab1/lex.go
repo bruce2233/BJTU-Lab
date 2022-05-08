@@ -12,15 +12,6 @@ func scan() {
 	// context := []byte("abc 12 d34 {")
 	// token := []string{"IDENTIFIER"}
 	// var context []byte
-	// exp1 := regexp.MustCompile(`^[a-zA-Z]+\w`)
-	// exp2 := regexp.MustCompile(`^[0-9]+`)
-	// exp3 := regexp.MustCompile("^[\\+\\-\\*\\;\\(\\)\\,\\{\\}]+")
-	// exp4 := regexp.MustCompile(`^\s+`)
-	// exps := []regexp.Regexp{}
-	// exps = append(exps, *exp1)
-	// exps = append(exps, *exp2)
-	// exps = append(exps, *exp3)
-	// exps = append(exps, *exp4)
 	ruleByte, err := ioutil.ReadFile("rule.json")
 	if err != nil {
 		fmt.Println("open rule.json err")
@@ -46,6 +37,7 @@ func scan() {
 	if err != nil {
 		fmt.Println("read file error!")
 	}
+	err = ioutil.WriteFile("output.txt", []byte{}, 0777)
 	outPutFile, err := os.OpenFile("output.txt", os.O_RDWR, 0777)
 	if err != nil {
 		fmt.Println("open output err")
@@ -56,7 +48,7 @@ func scan() {
 			break
 		}
 		res := lexScanner.findFromExps(context)
-		outPutFile.Write(res)
+		outPutFile.Write([]byte(string(res.text) + ": " + res.TokenName + "\n"))
 	}
 }
 
@@ -65,22 +57,31 @@ type LexScanner struct {
 	TokensCompiled []TokenCompiled
 }
 
-func (lexScanner *LexScanner) findFromExps(context []byte) []byte {
+func (lexScanner *LexScanner) findFromExps(context []byte) TokenMatchText {
 	for _, item := range lexScanner.TokensCompiled {
-		res := item.ExpCompiled.Find(context[lexScanner.pos:])
-		if res != nil {
-			lexScanner.pos += len(res)
-			fmt.Println(string(res), ": ", item.TokenName)
-			return res
+		res := item.ExpCompiled.FindSubmatch(context[lexScanner.pos:])
+		if res == nil {
+			continue
 		}
+		var matchedRes []byte
+		if len(res) == 1 {
+			matchedRes = res[0]
+		} else if len(res) == 2 {
+			matchedRes = res[1]
+		}
+		lexScanner.pos += len(matchedRes)
+		fmt.Println(string(matchedRes), ": ", item.TokenName)
+		tokenMatchText := TokenMatchText{
+			TokenName: item.TokenName,
+			text:      matchedRes}
+		return tokenMatchText
 	}
-	panic("no")
-	return nil
+	panic("invalid lex position: " + string(context[lexScanner.pos:lexScanner.pos+10]))
 }
 
 type TokenMatchText struct {
-	token []byte
-	text  []byte
+	TokenName string
+	text      []byte
 }
 
 type Rule struct {

@@ -14,7 +14,13 @@ func TestScan(t *testing.T) {
 }
 
 func TestReg(t *testing.T) {
-	str := "<"
-	matched, err := regexp.MatchString("<>(?:>)", str)
-	fmt.Println(matched, err)
+	s := []byte("/* \nad*/")
+	re := regexp.MustCompile("\\A/\\*[\\s\\S]*\\*/")
+	res := re.FindSubmatch(s)
+	fmt.Println(res)
+	t.Log(res)
+	for _, item := range res {
+		fmt.Println(string(item))
+	}
+	// fmt.Println(res[1])
 }
