@@ -25,7 +25,6 @@ func scan() {
 	for _, item := range rule.Tokens {
 		fmt.Println(item.ExpStr)
 		exp := regexp.MustCompile(item.ExpStr)
-		// tokensCompiled[index].ExpCompiled = *exp
 		tokenCompiled := TokenCompiled{item, *exp}
 		tokensCompiled = append(tokensCompiled, tokenCompiled)
 	}
