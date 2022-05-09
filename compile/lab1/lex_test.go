@@ -8,8 +8,7 @@ import (
 
 func TestScan(t *testing.T) {
 	t.Log("testing...")
-	// exp1 := regexp.MustCompile("^[a-zA-Z]+\\w")
-	// fmt.Println(exp1)
+
 	scan()
 }
 
@@ -22,5 +21,4 @@ func TestReg(t *testing.T) {
 	for _, item := range res {
 		fmt.Println(string(item))
 	}
-	// fmt.Println(res[1])
 }
