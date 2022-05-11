@@ -8,7 +8,6 @@ import (
 
 func TestScan(t *testing.T) {
 	t.Log("testing...")
-
 	scan()
 }
 
