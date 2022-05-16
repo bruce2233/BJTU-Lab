@@ -1,0 +1,119 @@
+# 计算机体系结构lab4
+
+## 19281030-张云鹏
+
+## Tomasulo算法
+
+### 输入指令程序, 配置指令耗时
+
+![](2022-05-16-14-10-09.png)
+
+### 指令执行周期跟踪
+
+1. `Cycle 1` 
+   - 取出第一条指令`L.D F0, 0(R1)`
+   - `Load1`设为Busy
+   - `Load1`名存入F0 
+
+![](2022-05-16-14-02-37.png)
+
+2. `Cycle 2` 
+   - 取出第二条指令 `ADD.D F4, F0, F2`
+   - `Qj`存入`Load1`
+   - `Add1`设为Busy
+   - `Add1`名存入 `F4`
+   - `L.D`指令执行
+
+![](2022-05-16-14-08-00.png)
+
+3. `Cycle 3`
+    - `Load`指令执行完毕
+    - 取出第三条指令 `MULT.D F0, F2, F4`
+    - Mult1.Busy=Yes
+    - F0.Qi=Mult1
+    - Mult1.Qk=Add1
+![](2022-05-16-14-11-38.png)
+
+4. Cycle 4
+    - Load1 Write Result 
+    - Load1.Busy =No
+    - Add1.Vj=M1
+    - Fetch 4th instruction
+    - Mult2.Busy = Yes 
+    - Mult2.Qj = Mult1
+
+![](2022-05-16-14-31-16.png)
+
+5. Cycle 5
+    - 2nd instruction start to execute 
+    - fetch 5th instruction 
+    - Load1.Busy = Yes
+    - F0.Qi = Load1
+
+![](2022-05-16-14-35-14.png)
+
+6. Cycle 6
+    - Load1 start to execute
+    - Fetch 6th instruction
+    - Add2.Busy = Yes 
+    - Add2.Qj = Load1
+
+![](2022-05-16-14-38-04.png)
+
+7. Cycle 7
+    - 2nd and 5th instruction complete
+  
+![](2022-05-16-14-39-23.png)
+
+8. Cycle 8
+    - 2nd and 5th instruction write result 
+    - F0.Value = M1
+    - Add2.Vj = M1
+    - Mult1.Vk = M1
+
+![](2022-05-16-14-41-15.png)
+
+9. Cycle 9
+    - Mult2 and Add2 start to execute
+  
+![](2022-05-16-14-51-17.png)
+
+10. Skip Cycle 10
+11. Cycle 11
+    - Add2 Complete
+  
+![](2022-05-16-14-52-56.png)
+
+12. Cycle 12
+    - 6th write to F4
+    - F4.Value = M2
+    - Add2.Busy = No
+
+![](2022-05-16-14-54-44.png)
+
+13. Cycle 13 skip
+14. Cycle 14 skip
+15. Cycle 15 skip
+16. Cycle 16
+    - 3rd instruction write to F10
+    - Fetch 7th instruction
+    - F10.Qi = Mult1
+    - Mult2.Vj = M3
+![](2022-05-16-15-00-54.png)
+
+17. Cycle 17
+    - 4th and 7th instruction start to execute
+![](2022-05-16-15-01-50.png)
+
+18. Cycle 18 ~ Cycle 41 skip
+19. Cycle 42
+    - 4th and 7th instruction write results
+    - F10.Value = M3
+    - Fetch 8th instruction
+    - F0.Qi = Mult1
+20. Cycle 43 ~ Cycle 49 skip
+21. Cycle 50
+    - 8th write to F0
+    - F0.Value = M4
+
+![](2022-05-16-15-13-56.png)
