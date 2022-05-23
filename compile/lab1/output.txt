@@ -1,0 +1,7 @@
+!=: NE
+ : SPACE
+/: SLASH
+
+: SPACE
+//你好 , 0p
+: COMMENT

@@ -1,67 +1,59 @@
-#include <iostream>
-#include <cstring>
-#include <vector>
-#include <unistd.h>
-#include <iterator>
+---
+title: 处理器调度算法模拟实现与比较
+author: 19281030-张云鹏
+date: 2022-05-04
+---
 
-using namespace std;
+# 处理器调度算法模拟实现与比较实验报告
+## 19281030-张云鹏
+## 实验截图
 
-const int TIME_SLICE = 1500;
+### 时间片轮转调度算法 
+![时间片轮转](./result.jpg)
 
-class ITask
-{
+### 先来先调度算法
+![](result2.jpg)
+
+### 短进程优先调度算法
+![](result3.jpg)
+
+## 实验环境
+- Windows 10 v19044.1645
+- gcc version 8.1.0 (x86_64-posix-sjlj-rev0)
+
+## 测试命令
+```shell
+g++ schedule.cpp && ./a.exe
+```
+
+## 数据结构设计
+### 进程数据结构
+```C++
+class ITask{
 public:
-    virtual void run() = 0;
-    virtual void stop() = 0;
-    int pid;
+    virtual void run()=0;    //线程调用
+    virtual void stop()=0;   //结束通知调度器
+    int pid;                 //pid标识进程
 };
+//进程接口, 可由进程或线程实现
 
-class Process : public ITask
-{
+class Process: public ITask{
 public:
-    int status;
     void run();
     void stop();
 };
-
-void Process::run()
-{
-    std::cout << "process " << this->pid << " is running..." << std::endl;
-}
-void Process::stop()
-{
-    std::cout << "process " << this->pid << " stops" << std::endl;
-}
-
+//真实进程
+```
+### 调度器基类数据结构
+```C++
 class ISchedule
 {
 public:
-    virtual void inter_call() = 0;      //时钟中断信号处理程序
-    virtual void call(ITask *task) = 0; //调用进程
-    virtual void schedule_task() = 0;   //调度逻辑
-};
-
-class Schedule : public ISchedule
-{
-public:
-    void inter_call();
-    void call(ITask *task);
-    void schedule_task();
-};
-
-void Schedule::call(ITask *task)
-{
-    task->run();
-}
-void Schedule::schedule_task()
-{
-    std::cout << "schedule_task" << std::endl;
-}
-
-void Schedule::inter_call()
-{
-    std::cout << "called by the clock interupt..." << std::endl;
-}
+    virtual void inter_call() = 0;        //时钟中断信号处理程序
+    virtual void call(ITask *task) = 0;   //调用进程
+    virtual void schedule_task() = 0;     //调度逻辑
+};                                        
+//调度器接口
 
 class ScheduleWithTaskList : public Schedule
 {
@@ -72,56 +64,29 @@ public:
     void remove_task(vector<ITask *>::iterator &it); //移除运行完毕的线程
     void show_task_queue();                          //打印当前队列
 };
-void ScheduleWithTaskList::add_task(ITask *task)
-{
-    this->task_queue.push_back(task);
-}
-void ScheduleWithTaskList::remove_task(vector<ITask *>::iterator &ite)
-{
-    if (*ite == *(this->task_queue.end() - 1))
-    {
-        ite = this->task_queue.begin();
-        this->task_queue.pop_back();
-        // this->it = this->task_queue.begin();
-    }
-    else
-    {
-        this->task_queue.erase(ite);
-    }
-}
-void ScheduleWithTaskList::show_task_queue()
-{
-    std::cout << "task_queue: " << std::endl;
-    for (ITask *item : this->task_queue)
-    {
-        std::cout << item->pid;
-    }
-    cout << endl;
-}
+//增加线程队列
+
+
+```
+
+## 时间片轮转调度算法
+### 数据结构
+```C++
 class ScheduleTimeSlice : public ScheduleWithTaskList
 {
 public:
     void call();
     void schedule_task();
-    void set_clock(int time); //设定时钟中断周期
+    void set_clock(int time);//设定时钟中断周期
 };
-void ScheduleTimeSlice::call()
-{
-    if (this->task_queue.begin() == this->task_queue.end())
-    {
-        std::cout << "no process" << std::endl;
-    }
-    else
-    {
-        ITask *task = *it;
-        this->Schedule::call(task);
-        it++;
-    }
-}
-void ScheduleTimeSlice::set_clock(int time)
-{
-    std::cout << "after " << time << "ms another task runs" << std::endl;
-}
+```
+### 进程调度逻辑
+1. 设定时钟周期, 
+2. 生成守护idle闲置进程, 永不退出队列
+3. 遍历线程队列 
+4. 每次调用进程结束后随机生成新进程添加至线程队列
+5. 每次调用进程结束后随机结束当前进程
+```C++
 void ScheduleTimeSlice::schedule_task()
 {
     this->set_clock(TIME_SLICE / 10000); //设定时钟周期
@@ -145,22 +110,34 @@ void ScheduleTimeSlice::schedule_task()
         this->show_task_queue(); //打印进程队列
     }
 }
-
+```
+##  先来先服务调度算法
+### 数据结构
+```C++
 class ScheduleComeFirst : public ScheduleWithTaskList
 {
 public:
-    void schedule_task();
+    void schedule_task();       //overide 调度逻辑
+    void add_task(ITask* task); //overide 添加队列
 };
+```
 
+### 进程调度逻辑
+
+1. 生成守护idle闲置进程, 永不退出队列
+2. 顺序执行线程队列
+3. 执行完毕后删除线程
+4. 每次调用进程结束后随机生成新进程添加至线程队列
+5. 每次调用进程结束后随机结束当前进程
+
+```C++
 void ScheduleComeFirst::schedule_task()
 {
-    Process p0, p1, p2;
+    Process p0;
     p0.pid = 0;
-    p1.pid = 1;
-    p2.pid = 2;
+
     this->task_queue.push_back(&p0);
-    this->task_queue.push_back(&p1);
-    this->task_queue.push_back(&p2);
+
     this->it = this->task_queue.begin();
     while (true)
     {
@@ -186,13 +163,24 @@ void ScheduleComeFirst::schedule_task()
         }
     }
 };
-
+```
+## 短进程优先调度算法
+### 数据结构
+```C++
 class ScheduleShortFirst : public ScheduleWithTaskList
 {
 public:
-    void add_task(ITask *task);
-    void schedule_task();
+    void add_task(ITask *task); //overide
+    void schedule_task();       //overide
 };
+```
+### 进程调度逻辑
+1. 生成守护idle闲置进程, 永不退出队列
+2. 顺序执行线程队列
+3. 执行完毕后删除线程
+4. 每次调用进程结束后随机生成新进程添加至线程队列, 调用用时估计函数, 按从小到大顺序排序
+
+```C++
 void ScheduleShortFirst::add_task(ITask *task)
 {
     if (this->task_queue.size() == 0)
@@ -208,17 +196,9 @@ void ScheduleShortFirst::add_task(ITask *task)
 }
 void ScheduleShortFirst::schedule_task()
 {
-    Process p0, p1, p2, p3, p4;
+    Process p0;
     p0.pid = 0;
-    p1.pid = 1;
-    p2.pid = 2;
-    p3.pid = 3;
-    p4.pid = 4;
     this->add_task(&p0);
-    this->add_task(&p1);
-    this->add_task(&p2);
-    this->add_task(&p3);
-    this->add_task(&p4);
 
     this->it = this->task_queue.begin();
     while (true)
@@ -246,27 +226,4 @@ void ScheduleShortFirst::schedule_task()
     }
 }
 
-int main(int argc, const char **argv)
-{
-    // ScheduleWithTaskList schedule;
-    // ScheduleTimeSlice schedule;
-    // schedule.task_queue.reserve(100);
-    // Process p1;
-    // p1.pid=0;
-    // Process p2;
-    // p2.pid=7;
-    // Process* px;
-    // schedule.set_clock(TIME_SLICE);
-    // schedule.add_task(&p1);
-    // schedule.add_task(&p2);
-    // schedule.it = schedule.task_queue.begin();
-    // schedule.schedule_task();
-
-    // ScheduleComeFirst schedule;
-    // schedule.schedule_task();
-
-    ScheduleShortFirst schedule;
-    schedule.schedule_task();
-
-    return 0;
-}
+```
