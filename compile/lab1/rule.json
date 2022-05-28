@@ -1,36 +1,49 @@
 {
-    "tokens": [{
-        "expStr": "\\A[a-zA-Z]+\\w*",
-        "token": "IDENTIFIER"
-    }, {
-        "expStr": "\\A[0-9]+\\w",
-        "token": "UNSIGNEDINT"
-    }, {
-        "expStr": "\\A[\\+\\-\\*\\;\\(\\)\\,\\{\\}]",
-        "token": "SINGLEDELIMITER"
-    }, {
-        "expStr": "^\\s+",
-        "token": "SPACE"
-    }, {
-        "expStr": "(\\A<)(?:[^=>])",
-        "token": "LT"
-    }, {
-        "expStr": "(\\A>)(?:[^=])",
-        "token": "GT"
-    }, {
-        "expStr": "\\A<>",
-        "token": "NE"
-    }, {
-        "expStr": "\\A!=",
-        "token": "NE"
-    }, {
-        "expStr": "(\\A/)(?:[^/*])",
-        "token": "SLASH"
-    }, {
-        "expStr": "\\A//.*\\r\\n",
-        "token": "COMMENT"
-    }, {
-        "expStr": "\\A/\\*[\\s\\S]*\\*/",
-        "token": "COMMENT"
-    }]
+  "tokens": [
+    {
+      "expStr": "\\A[a-zA-Z]+\\w*",
+      "token": "IDENTIFIER"
+    },
+    {
+      "expStr": "\\A[0-9]+\\w",
+      "token": "UNSIGNEDINT"
+    },
+    {
+      "expStr": "\\A[\\+\\-\\*\\;\\(\\)\\,\\{\\}]",
+      "token": "SINGLEDELIMITER"
+    },
+    {
+      "expStr": "^\\s+",
+      "token": "SPACE"
+    },
+    {
+      "expStr": "(\\A<)(?:[^=>])",
+      "token": "LT"
+    },
+    {
+      "expStr": "(\\A>)(?:[^=])",
+      "token": "GT"
+    },
+    {
+      "expStr": "\\A<>",
+      "token": "NE"
+    },
+    {
+      "expStr": "\\A!=",
+      "token": "NE"
+    },
+    {
+      "expStr": "(\\A/)(?:[^/*])",
+      "token": "SLASH"
+    },
+    {
+      "expStr": "\\A//.*\\r\\n",
+      "token": "COMMENT"
+    },
+    {
+      "expStr": "\\A/\\*[\\s\\S]*\\*/",
+      "token": "COMMENT"
+    }
+  ],
+  "reservedWords": ["main", "for", "if", "else", "int", "double"]
 }

@@ -1,7 +1,17 @@
-!=: NE
- : SPACE
-/: SLASH
+void: IDENTIFIER;
+ : SPACE;
+main: IDENTIFIER;
+ : SPACE;
+my_word: IDENTIFIER;
 
-: SPACE
+: SPACE;
+!=: NE;
+ : SPACE;
+/: SLASH;
+
+: SPACE;
 //你好 , 0p
-: COMMENT
+: COMMENT;
+/* 
+fa
+fa*/: COMMENT;

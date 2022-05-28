@@ -1,5 +1,6 @@
+void main my_word
 != /
 //你好 , 0p
-?/* 
+/* 
 fa
 fa*/

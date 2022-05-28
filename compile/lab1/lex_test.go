@@ -2,6 +2,7 @@ package lab1
 
 import (
 	"fmt"
+	"io/ioutil"
 	"regexp"
 	"testing"
 )
@@ -20,4 +21,13 @@ func TestReg(t *testing.T) {
 	for _, item := range res {
 		fmt.Println(string(item))
 	}
+}
+
+func TestReservedWords(t *testing.T) {
+	context, err := ioutil.ReadFile("rule.txt")
+	if err != nil {
+		t.Log("error!")
+	}
+
+
 }

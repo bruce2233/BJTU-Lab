@@ -47,7 +47,7 @@ func scan() {
 			break
 		}
 		res := lexScanner.findFromExps(context)
-		outPutFile.Write([]byte(string(res.text) + ": " + res.TokenName + "\n"))
+		outPutFile.Write([]byte(string(res.text) + ": " + res.TokenName + ";\n"))
 	}
 }
 
@@ -69,7 +69,7 @@ func (lexScanner *LexScanner) findFromExps(context []byte) TokenMatchText {
 			matchedRes = res[1]
 		}
 		lexScanner.pos += len(matchedRes)
-		fmt.Println(string(matchedRes), ": ", item.TokenName)
+		fmt.Println(string(matchedRes), ": ", item.TokenName, ";")
 		tokenMatchText := TokenMatchText{
 			TokenName: item.TokenName,
 			text:      matchedRes}
@@ -78,13 +78,22 @@ func (lexScanner *LexScanner) findFromExps(context []byte) TokenMatchText {
 	panic("invalid lex position: " + string(context[lexScanner.pos:lexScanner.pos+10]))
 }
 
+func (lexScanner *LexScanner) replaceReservedWord(reservedWords *[]string) {
+	_, err := ioutil.ReadFile("input.txt")
+	if err != nil {
+		fmt.Println("read file error!")
+	}
+	fmt.Println(reservedWords)
+}
+
 type TokenMatchText struct {
 	TokenName string
 	text      []byte
 }
 
 type Rule struct {
-	Tokens []Token `json:"tokens"`
+	Tokens        []Token  `json:"tokens"`
+	ReservedWords []string `json:"reservedWords"`
 }
 type Token struct {
 	ExpStr    string `json:"expStr"`

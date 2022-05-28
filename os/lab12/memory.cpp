@@ -13,39 +13,43 @@ void init_os_and_user_memory()
 class MemTabItem
 {
 public:
-    int mem_tab_item_ID;
-    uintptr_t begin_ptr;
-    int mem_tab_item_size;
+    int mem_tab_item_ID;   //内存块ID
+    uintptr_t begin_ptr;   //内存块起始地址
+    int mem_tab_item_size; //内存块大小
 };
 
 class MemTab
 {
 public:
-    std::vector<MemTabItem> mem_tab_items;
-    uintptr_t mem_tab_min;
-    uintptr_t mem_tab_max;
-    virtual int memory_alloc(uint memory_size);
-    void memory_recycle(uint memory_item_index);
-    void memory_degap();
+    std::vector<MemTabItem> mem_tab_items;       //数据项
+    uintptr_t mem_tab_min;                       //最低地址
+    uintptr_t mem_tab_max;                       //最高地址
+    virtual int memory_alloc(uint memory_size);  //内存分配
+    void memory_recycle(uint memory_item_index); //内存回收
+    void memory_degap();                         //内存拼接
 };
+
+//输入需分配内存大小, 返回内存表索引
 int MemTab::memory_alloc(uint memory_size)
 {
-    std::cout << "not implemented!" << std::endl;
+    std::cout << "not implemented!" << std::endl; //待具体分配算法实现
     return -1;
 }
+//输入需回收内存表索引
 void MemTab::memory_recycle(uint memory_item_index)
 {
     if (memory_item_index == 0)
     {
-        cout << "0 内存不允许回收" << endl;
+        cout << "0 内存不允许回收" << endl; //保证数据表不为空, 以免引发指针错误
     }
     MemTabItem new_mem_tab_item = mem_tab_items[memory_item_index];
     cout << "回收内存ID: " << new_mem_tab_item.mem_tab_item_ID << " 内存首地址: " << new_mem_tab_item.begin_ptr << endl;
     mem_tab_items.erase(mem_tab_items.begin() + memory_item_index);
 }
+//内存拼接
 void MemTab::memory_degap()
 {
-    cout << "内存拼接: " << endl;
+    cout << "内存拼接: " << endl; //遍历内存表, copy memory
     for (int i = 0; i < this->mem_tab_items.size() - 1; i++)
     {
         cout << "memory copy from  " << mem_tab_items[i + 1].begin_ptr;
@@ -54,6 +58,7 @@ void MemTab::memory_degap()
     }
 }
 
+// First Fit 内存分配算法
 class MemTabFirstFit : public MemTab
 {
 public:
@@ -61,13 +66,13 @@ public:
 };
 int MemTabFirstFit::memory_alloc(uint memory_size)
 {
-    for (int i = 0; i < this->mem_tab_items.size(); i++)
+    for (int i = 0; i < this->mem_tab_items.size(); i++) //遍历内存表
     {
-        if (i == mem_tab_items.size() - 1)
+        if (i == mem_tab_items.size() - 1) //最后一项
         {
-            if (mem_tab_items[i].begin_ptr + memory_size <= this->mem_tab_max)
-            { // 是否超出用户区
-                MemTabItem new_mem_tab_item;
+            if (mem_tab_items[i].begin_ptr + memory_size <= this->mem_tab_max) //是否超出用户区
+            {
+                MemTabItem new_mem_tab_item; //创建新内存表项
                 new_mem_tab_item.begin_ptr = mem_tab_items[i].begin_ptr + mem_tab_items[i].mem_tab_item_size;
                 new_mem_tab_item.mem_tab_item_ID = i + 1;
                 new_mem_tab_item.mem_tab_item_size = memory_size;
@@ -97,6 +102,7 @@ int MemTabFirstFit::memory_alloc(uint memory_size)
     return -1;
 }
 
+// Worst Fit 内存分配算法
 class MemTabWorstFit : public MemTab
 {
 public:
@@ -104,14 +110,14 @@ public:
 };
 int MemTabWorstFit::memory_alloc(uint memory_size)
 {
-    int cur_space = -1;
-    int cur_position = -1;
+    int cur_space = -1;    //当前空间大小
+    int cur_position = -1; //最大的可插入位置
     for (int i = 0; i < this->mem_tab_items.size(); i++)
     {
-        if (i == mem_tab_items.size() - 1)
+        if (i == mem_tab_items.size() - 1) //是否为最后一项
         {
             int space_after_i = mem_tab_max - mem_tab_items[i].begin_ptr;
-            if (space_after_i <= memory_size && space_after_i > cur_space)
+            if (space_after_i <= memory_size && space_after_i > cur_space) //当前空间更大则变更插入位置
             {
                 cur_position = i;
             }
@@ -140,12 +146,12 @@ int MemTabWorstFit::memory_alloc(uint memory_size)
 class Controller
 {
 public:
-    MemTab *os_memory_tab;
-    MemTab *user_memory_tab;
-    void init_memory();
-    void handle_process_create();
-    void handle_process_sleep();
-    void handle_process_activate();
+    MemTab *os_memory_tab;          //内核空间内存表
+    MemTab *user_memory_tab;        //用户空间内存表
+    void init_memory();             //物理空间初始化
+    void handle_process_create();   //处理进程创建事件
+    void handle_process_sleep();    //处理进程休眠事件
+    void handle_process_activate(); //处理进程激活事件
 };
 
 void Controller::init_memory()
@@ -190,7 +196,7 @@ void Controller::handle_process_sleep()
     cout << "进程挂起, 空闲时间完成拼接" << endl;
     this->user_memory_tab->memory_degap();
 }
-
+//模拟动态内存管理
 int main(int argc, const char **argv)
 {
     Controller controller;
@@ -214,22 +220,28 @@ int main(int argc, const char **argv)
     return 0;
 }
 
+//统计平均内存利用率
 double statics_mem_utilization_rate(Controller controller)
 {
-    double mem_utilization_rate_average = 0;
-    vector<double> mem_utilization_rates;
+    double mem_utilization_rate_average = 0; //平均内存利用率
+    vector<double> mem_utilization_rates;    //一秒内内存利用率数组
+    //每秒计算一次内存利用率, 然后求平均值.
     while (true)
     {
         vector<MemTabItem> mem_tab_items = controller.user_memory_tab->mem_tab_items;
         int sum = 0;
+        //遍历内存表, 求利用内存和
         for (int i = 0; i < mem_tab_items.size(); i++)
         {
             sum += mem_tab_items[i].mem_tab_item_size;
         }
+        //求当前内存利用率
         double mem_utilization_rate = sum / (512 - 128) * pow(2, 20);
         mem_utilization_rates.push_back(mem_utilization_rate);
+        //休眠1秒
         sleep(1);
     }
+    //求内存利用率平均值
     double rates_sum = 0;
     for (int i = 0; i < mem_utilization_rates.size(); i++)
     {
