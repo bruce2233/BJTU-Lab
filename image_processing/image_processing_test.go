@@ -13,4 +13,5 @@ func TestImage(t *testing.T) {
 		fmt.Println("open error")
 	}
 	fmt.Fprint(outputFile, "Fuck U!")
+	
 }
