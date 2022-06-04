@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 )
 
 const (
@@ -42,14 +43,33 @@ func (disk *Disk) Export() {
 	file.Write(disk.DiskData) //写入字节流到文件, 导出镜像文件
 	fmt.Println("导出映像文件完成.")
 }
-type iNodee interface{
+
+type INoder interface {
 	create()
 	rename(newName string)
 	show()
 	delete()
 }
-type iNode struct {
-	
+type INode struct {
+	name       string
+	createTime string
+	size       int
+	fatHead    int
+}
+
+func (iNode *INode) toBytes() {
+
+	nameBytes := make([]byte, 8, 8) //名称转化为字节
+	nameBytes = []byte()
+	myTime := time.Time{}
+}
+
+type Byter interface {
+	toBytes(byter *Byter)
+}
+
+type fat struct {
+	next int
 }
 
 func main() {
