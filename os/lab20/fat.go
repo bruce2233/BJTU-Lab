@@ -60,12 +60,18 @@ type INode struct {
 func (iNode *INode) toBytes() {
 
 	nameBytes := make([]byte, 8, 8) //名称转化为字节
-	nameBytes = []byte()
-	myTime := time.Time{}
+	nameBytes = []byte(iNode.name)
+	fmt.Println(nameBytes)
+	
+	myTime := time.Now()
+	fmt.Println(myTime)
+
+	timeStamp := myTime.Unix()
+	fmt.Println(timeStamp)
 }
 
 type Byter interface {
-	toBytes(byter *Byter)
+	toBytes()
 }
 
 type fat struct {
