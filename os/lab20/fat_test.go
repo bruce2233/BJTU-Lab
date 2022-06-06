@@ -14,4 +14,6 @@ func TestFat(t *testing.T) {
 		size:       0,
 	}
 	iNode.toBytes()
+
+	
 }

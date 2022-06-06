@@ -21,8 +21,8 @@ type DiskInitAndExport interface {
 type Disk struct {
 	DiskData []byte
 	MBR      []byte
-	FAT1     []byte
-	FAT2     []byte
+	FAT1     []int
+	FAT2     []int
 	RootDir  []byte
 	FileData []byte
 }
@@ -46,6 +46,8 @@ func (disk *Disk) Export() {
 	file.Write(disk.DiskData) //写入字节流到文件, 导出镜像文件
 	fmt.Println("导出映像文件完成.")
 }
+
+var disk = new(Disk)
 
 type INoder interface {
 	create()
@@ -93,9 +95,24 @@ func (iNode *INode) toBytes() []byte {
 }
 
 func (iNode *INode) create(newNode *INode) {
-	if newNode.size == 0 {
-		
+	availableBlockAddress := getAvailableFatAddress()
+	iNode.fatTail = availableBlockAddress
+	fmt.Println("创建文件/目录, iNode保存fat地址: ", iNode.fatTail)
+	fmt.Println("创建文件/目录, 更新内容: ", iNode.fatTail)
+	copy(disk.DiskData[availableBlockAddress:availableBlockAddress+64], newNode.toBytes())
+	if iNode.size != 0 {
+
 	}
+}
+
+//获取空闲的磁盘块地址
+func getAvailableFatAddress() int {
+	for item := range disk.FAT1 {
+		if item == 0 {
+			return item
+		}
+	}
+	return -1
 }
 
 type Byter interface {
