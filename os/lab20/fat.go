@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"os"
 	"time"
@@ -15,6 +17,7 @@ type DiskInitAndExport interface {
 	Init()
 	Export()
 }
+
 type Disk struct {
 	DiskData []byte
 	MBR      []byte
@@ -50,24 +53,49 @@ type INoder interface {
 	show()
 	delete()
 }
+
 type INode struct {
 	name       string
-	createTime string
-	size       int
+	createTime int64
+	accessTime int64
+	modifyTime int64
+	size       int64
 	fatHead    int
+	fatTail    int
+	fileBytes  []byte
 }
 
-func (iNode *INode) toBytes() {
+func (iNode *INode) toBytes() []byte {
+	iNodeBytes := make([]byte, 0, 64)
+	nameBytes := []byte(iNode.name)
+	nameBytes = nameBytes[:16] //名称保留前16字节
+	iNodeBytes = append(iNodeBytes, nameBytes...)
+	fmt.Println("文件名称: ", string(nameBytes))
 
-	nameBytes := make([]byte, 8, 8) //名称转化为字节
-	nameBytes = []byte(iNode.name)
-	fmt.Println(nameBytes)
-	
-	myTime := time.Now()
-	fmt.Println(myTime)
+	t := new(bytes.Buffer)
+	binary.Write(t, binary.LittleEndian, iNode.createTime) //创建时间8字节, 小端序
+	iNodeBytes = append(iNodeBytes, t.Bytes()...)
+	fmt.Println("创建时间: ", time.Unix(iNode.createTime, 0))
 
-	timeStamp := myTime.Unix()
-	fmt.Println(timeStamp)
+	binary.Write(t, binary.LittleEndian, iNode.accessTime) //访问时间8字节, 小端序
+	iNodeBytes = append(iNodeBytes, t.Bytes()...)
+	fmt.Println("最近访问时间: ", time.Unix(iNode.accessTime, 0))
+
+	binary.Write(t, binary.LittleEndian, iNode.modifyTime) //修改时间8字节, 小端序
+	iNodeBytes = append(iNodeBytes, t.Bytes()...)
+	fmt.Println("最近修改时间: ", time.Unix(iNode.modifyTime, 0))
+
+	binary.Write(t, binary.LittleEndian, iNode.size) //文件大小8字节, 小端序, 定位Byte
+	iNodeBytes = append(iNodeBytes, t.Bytes()...)
+	fmt.Println("文件大小: ", iNode.size)
+
+	return iNodeBytes
+}
+
+func (iNode *INode) create(newNode *INode) {
+	if newNode.size == 0 {
+		
+	}
 }
 
 type Byter interface {
