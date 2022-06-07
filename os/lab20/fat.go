@@ -21,8 +21,8 @@ type DiskInitAndExport interface {
 type Disk struct {
 	DiskData []byte
 	MBR      []byte
-	FAT1     []int
-	FAT2     []int
+	FAT1     []byte
+	FAT2     []byte
 	RootDir  []byte
 	FileData []byte
 }
@@ -52,6 +52,7 @@ var disk = new(Disk)
 type INoder interface {
 	create()
 	rename(newName string)
+	cd()
 	show()
 	delete()
 }
@@ -104,6 +105,19 @@ func (iNode *INode) create(newNode *INode) {
 
 	}
 }
+func (iNode *INode) cd() {
+	fmt.Println("进入目录: ", "/")
+}
+func (iNode *INode) show() {
+	fmt.Println("显示目录内文件: ", "张云鹏.txt")
+}
+func (iNode *INode) delete(address int) {
+	disk.FAT1[address] = 0
+	fmt.Println("     删除文件: ", "file.txt")
+}
+func (iNode *INode) rename() {
+	fmt.Println("    重命名文件: ", "张云鹏.txt", "to file.txt")
+}
 
 //获取空闲的磁盘块地址
 func getAvailableFatAddress() int {
@@ -112,7 +126,53 @@ func getAvailableFatAddress() int {
 			return item
 		}
 	}
+	panic("No Available Address")
 	return -1
+}
+
+//将字节流复制到硬盘
+func writeBytesToDisk(sourceBytes []byte) int {
+	// var n = 0
+	blockNum := len(sourceBytes)/64 + 1
+	if len(sourceBytes)%64 == 0 {
+		blockNum--
+	}
+	for i := 0; i < blockNum; i++ {
+		availableFatAddress := getAvailableFatAddress()
+		diskBlock := disk.DiskData[availableFatAddress : availableFatAddress+64]
+		diskBlockBuffer := bytes.NewBuffer(diskBlock)
+		limit := Min(len(sourceBytes), (i+1)*64)
+		n, err := diskBlockBuffer.Write(sourceBytes[i*64 : limit])
+		if err != nil {
+			fmt.Println("写入硬盘失败")
+		}
+		fmt.Println("写入", n, "字节")
+	}
+
+	return 0
+}
+
+func Redirect(sourceBytes []byte, fileName string) {
+	file, err := os.OpenFile(fileName, os.O_RDWR, os.ModePerm)
+	if err != nil {
+		fmt.Println("file open err!")
+	}
+	file.Write(sourceBytes)
+}
+
+func Min(a int, b int) int {
+	if a < b {
+		return a
+	} else {
+		return b
+	}
+}
+
+func sliceSourceBytes(sourceBytes []byte) [][]byte {
+	var result [][]byte
+	line := len(sourceBytes)/64 + 1
+	fmt.Println(line)
+	return result
 }
 
 type Byter interface {
