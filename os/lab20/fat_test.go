@@ -28,7 +28,7 @@ func TestFat(t *testing.T) {
 	writeBytesToDisk(file2.fileBytes)
 	iNode.show()
 	iNode.rename()
-	iNode.delete()
+	iNode.delete(0)
 }
 
 func TestSlice(t *testing.T) {

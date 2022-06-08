@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	DISK_SIZE   = 1440 * 1024
-	SECTOR_SIZE = 512
+	DISK_SIZE   = 1440 * 1024 //硬盘大小1.44MB
+	SECTOR_SIZE = 512         //扇区大小
 )
 
 type DiskInitAndExport interface {
@@ -19,12 +19,13 @@ type DiskInitAndExport interface {
 }
 
 type Disk struct {
-	DiskData []byte
+	DiskData []byte //磁盘所有的字节
 	MBR      []byte
 	FAT1     []byte
 	FAT2     []byte
-	RootDir  []byte
-	FileData []byte
+	RootDir  []byte //根目录
+	FileData []byte //数据区
+	CurDir   string //当前目录
 }
 
 func (disk *Disk) Init() {
@@ -50,22 +51,22 @@ func (disk *Disk) Export() {
 var disk = new(Disk)
 
 type INoder interface {
-	create()
-	rename(newName string)
-	cd()
-	show()
-	delete()
+	create()               //创建目录/文件
+	rename(newName string) //重命名目录/文件
+	cd(path string)        //进入目录
+	show()                 //现实目录
+	delete(address int)    //删除地址
 }
 
 type INode struct {
-	name       string
-	createTime int64
-	accessTime int64
-	modifyTime int64
-	size       int64
-	fatHead    int
-	fatTail    int
-	fileBytes  []byte
+	name       string //目录/文件名
+	createTime int64  //创建时间
+	accessTime int64  //最近访问时间
+	modifyTime int64  //最近修改时间
+	size       int64  //文件大小
+	fatHead    int    //fat首地址
+	fatTail    int    //fat尾地址
+	fileBytes  []byte //文件内容
 }
 
 func (iNode *INode) toBytes() []byte {
@@ -102,11 +103,12 @@ func (iNode *INode) create(newNode *INode) {
 	fmt.Println("创建文件/目录, 更新内容: ", iNode.fatTail)
 	copy(disk.DiskData[availableBlockAddress:availableBlockAddress+64], newNode.toBytes())
 	if iNode.size != 0 {
-
+		writeBytesToDisk(iNode.fileBytes)
 	}
 }
-func (iNode *INode) cd() {
-	fmt.Println("进入目录: ", "/")
+func (iNode *INode) cd(dir INode) {
+	disk.CurDir = dir.name
+	fmt.Println("进入目录: ", dir.name)
 }
 func (iNode *INode) show() {
 	fmt.Println("显示目录内文件: ", "张云鹏.txt")
@@ -115,8 +117,9 @@ func (iNode *INode) delete(address int) {
 	disk.FAT1[address] = 0
 	fmt.Println("     删除文件: ", "file.txt")
 }
-func (iNode *INode) rename() {
-	fmt.Println("    重命名文件: ", "张云鹏.txt", "to file.txt")
+func (iNode *INode) rename(newName string) {
+	bytes.NewBuffer(iNode.fileBytes[:16]).Write([]byte(newName))
+	fmt.Println("    重命名文件: ", iNode.name, "to ", newName)
 }
 
 //获取空闲的磁盘块地址

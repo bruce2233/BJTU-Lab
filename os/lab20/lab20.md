@@ -7,247 +7,198 @@ date: 2022-06-07
 # FAT 文件系统模拟设计与实现
 ## 19281030-张云鹏
 ## 实验截图
-![](2022-05-23-22-29-00.png)
+
 ## 数据结构设计
-### 内存表
-```C++
-class MemTab
-{
-public:
-    std::vector<MemTabItem> mem_tab_items;       //数据项
-    uintptr_t mem_tab_min;                       //最低地址
-    uintptr_t mem_tab_max;                       //最高地址
-    virtual int memory_alloc(uint memory_size);  //内存分配函数
-    void memory_recycle(uint memory_item_index); //内存回收函数
-    void memory_degap();                         //内存拼接函数
-};
+### 硬盘
+```go
+type Disk struct {
+	DiskData []byte //磁盘所有的字节
+	MBR      []byte
+	FAT1     []byte
+	FAT2     []byte
+	RootDir  []byte //根目录
+	FileData []byte //数据区
+    CurDir   string //当前目录
+}
 ```
-### 内存块
-```C++
-class MemTabItem
-{
-public:
-    int mem_tab_item_ID;   //内存块ID
-    uintptr_t begin_ptr;   //内存块起始地址
-    int mem_tab_item_size; //内存块大小
-};
+### INode目录/文件
+```go
+type INoder interface {
+	create()               //创建目录/文件
+	rename(newName string) //重命名目录/文件
+	cd(path string)        //进入目录
+	show()                 //现实当前目录
+	delete(address int)    //删除地址
+}
+
+type INode struct {
+	name       string //目录/文件名
+	createTime int64  //创建时间
+	accessTime int64  //最近访问时间
+	modifyTime int64  //最近修改时间
+	size       int64  //文件大小
+	fatHead    int    //fat首地址
+	fatTail    int    //fat尾地址
+	fileBytes  []byte //文件内容
+}
 ```
-### 内存控制器
-```C++
-class Controller
-{
-public:
-    MemTab *os_memory_tab;          //内核空间内存表
-    MemTab *user_memory_tab;        //用户空间内存表
-    void init_memory();             //物理空间初始化
-    void handle_process_create();   //处理进程创建事件
-    void handle_process_sleep();    //处理进程休眠事件
-    void handle_process_activate(); //处理进程激活事件
-};
+### 磁盘常量
+```go
+const (
+	DISK_SIZE   = 1440 * 1024 //硬盘大小1.44MB
+	SECTOR_SIZE = 512         //扇区大小
+)
 ```
 
-## 物理内存空间布局初始化
+## 磁盘格式化和映像文件生成
 
-- 物理内存空间共分为两大部分, 内核空间与用户空间. 分别占用低地址128MB, 高地址384MB;
-- 初始化时单位统一为`B(Byte)`, 地址打印格式为16进制;
-```C++
-void Controller::init_memory()
-{
-    //设置内核空间与用户空间范围
-    this->os_memory_tab->mem_tab_min = 0;
-    this->os_memory_tab->mem_tab_max = 128 * pow(2, 20);
-    this->user_memory_tab->mem_tab_min = 128 * pow(2, 20);
-    this->user_memory_tab->mem_tab_max = 512 * pow(2, 20);
-    //此处省略输出代码等
+### 磁盘格式化
+
+- 磁盘划分为MBR,FAT1,FAT2,根目录,数据区,共5个区域
+- 保存每个区域的首位地址.
+```go
+func (disk *Disk) Init() {
+	disk.DiskData = make([]byte, DISK_SIZE, DISK_SIZE)               //磁盘大小1474560字节
+	disk.MBR = disk.DiskData[0:SECTOR_SIZE]                          //引导扇区
+	disk.FAT1 = disk.DiskData[SECTOR_SIZE : 10*SECTOR_SIZE]          //FAT1
+	disk.FAT2 = disk.DiskData[10*SECTOR_SIZE : 19*SECTOR_SIZE]       //FAT2
+	disk.RootDir = disk.DiskData[20*SECTOR_SIZE : 33*SECTOR_SIZE]    //根目录
+	disk.FileData = disk.DiskData[33*SECTOR_SIZE : 2879*SECTOR_SIZE] //数据区
+	fmt.Println("磁盘初始化完成.")
 }
 ```
 
-## 内存分配算法
-### First Fit 内存分配算法
-整体思路: 遍历内存表, 插入第一个空间足够的内存块.
-``` C++
-// First Fit 内存分配算法
-class MemTabFirstFit : public MemTab
-{
-public:
-    int memory_alloc(uint memory_size);
-};
-int MemTabFirstFit::memory_alloc(uint memory_size)
-{
-    for (int i = 0; i < this->mem_tab_items.size(); i++) //遍历内存表
-    {
-        if (i == mem_tab_items.size() - 1) //最后一项
-        {
-            if (mem_tab_items[i].begin_ptr + memory_size <= this->mem_tab_max) //是否超出用户区
-            {
-                MemTabItem new_mem_tab_item; //创建新内存表项
-                //此处省略内存块初始化与打印代码
-                return i + 1;
-            }
-        }
-        else
-        {
-            if (mem_tab_items[i].begin_ptr + mem_tab_items[i].mem_tab_item_size + memory_size <= mem_tab_items[i + 1].begin_ptr)// 是否超出下个内存块的首地址
-            { 
-                //此处省略内存块初始化与打印代码
-                return i + 1;
-            }
-        }
-    }
-    return -1;
+### 磁盘映像文件导出
+
+原封不动将字节流写入到文件
+```go
+func (disk *Disk) Export() {
+	imgFileName := "img"
+	os.Create(imgFileName)
+	file, err := os.OpenFile(imgFileName, os.O_RDWR, os.ModePerm) //读写模式打开文件
+	if err != nil {
+		fmt.Println("open file error")
+	}
+	file.Write(disk.DiskData) //写入字节流到文件, 导出镜像文件
+	fmt.Println("导出映像文件完成.")
 }
 ```
-### Worst Fit内存分配算法
-整体思路: 遍历所有的内存表项, 插入空间最大的内存块.
-```C++
-// Worst Fit 内存分配算法
-class MemTabWorstFit : public MemTab
-{
-public:
-    int memory_alloc(uint memory_size);
-};
-int MemTabWorstFit::memory_alloc(uint memory_size)
-{
-    int cur_space = -1;    //当前空间大小
-    int cur_position = -1; //最大的可插入位置
-    for (int i = 0; i < this->mem_tab_items.size(); i++)
-    {
-        if (i == mem_tab_items.size() - 1) //是否为最后一项
-        {
-            int space_after_i = mem_tab_max - mem_tab_items[i].begin_ptr;
-            if (space_after_i <= memory_size && space_after_i > cur_space) //当前空间更大则变更插入位置
-            {
-                cur_position = i;
-            }
-        }
-        else
-        {
-            int space_after_i = mem_tab_items[i + 1].begin_ptr - mem_tab_items[i].begin_ptr;
-            if (memory_size <= space_after_i && space_after_i > cur_space)
-            { // 是否超出下个内存块的首地址
-                cur_position = i;
-            }
-        }
-    }
-    if (cur_position != -1)
-    {
-        //此处省略内存块初始化与打印代码
-        return cur_position + 1;
-    }
-    return -1;
+## 目录/文件存取操作
+### 创建
+1. 获取空闲磁盘地址
+2. 创建iNode项
+3. 通过size判断是文件或是目录
+4. 如果是文件则讲fileBytes分成多个块写入磁盘
+5. 更新fat
+```go
+func (iNode *INode) create(newNode *INode) {
+	availableBlockAddress := getAvailableFatAddress()
+	iNode.fatTail = availableBlockAddress
+	fmt.Println("创建文件/目录, iNode保存fat地址: ", iNode.fatTail)
+	fmt.Println("创建文件/目录, 更新内容: ", iNode.fatTail)
+	copy(disk.DiskData[availableBlockAddress:availableBlockAddress+64], newNode.toBytes())
+	if iNode.size != 0 {
+		writeBytesToDisk(iNode.fileBytes)
+	}
 }
 ```
 
-## 内存拼接处理
-整体思路: 遍历内存表项, 将首地址移到到前一个内存块的末尾, 同时调用内存拷贝函数
-
-```C++
-//内存拼接
-void MemTab::memory_degap()
-{
-    cout << "内存拼接: " << endl; //遍历内存表, copy memory
-    for (int i = 0; i < this->mem_tab_items.size() - 1; i++)
-    {
-        cout << "memory copy from  " << mem_tab_items[i + 1].begin_ptr;
-        mem_tab_items[i + 1].begin_ptr = mem_tab_items[i].begin_ptr + mem_tab_items[i].mem_tab_item_size;
-        cout << " to " << mem_tab_items[i].begin_ptr + mem_tab_items[i].mem_tab_item_size << endl;
-    }
+```go
+//获取空闲的磁盘块地址
+func getAvailableFatAddress() int {
+	for item := range disk.FAT1 {
+		if item == 0 {
+			return item
+		}
+	}
+	panic("No Available Address")
+	return -1
 }
 ```
 
-## 进程事件处理
-### 进程创建
-进程创建时挂起, 随机分配内存大小模拟真实场景.
-```C++
-void Controller::handle_process_create()
-{
-    cout << "创建进程pid: " << rand() % 10000 << " 挂起, 随机分配内存" << endl;
-    this->user_memory_tab->memory_alloc(rand() % 100 * 1000);
-    //此处省略内核挂起进程代码
-}
-```
-### 进程激活
-进程激活后, 随机申请或回收内存模拟真实场景.
-```C++
-void Controller::handle_process_activate()
-{
-    cout << "进程激活, 随机申请或释放内存" << endl;
-    for (int i = 0; i < 10; i++) //随机10次
-    {
-        int x = rand();
-        if (x % 2 == 0)
-        {
-            this->user_memory_tab->memory_alloc(rand() % 100 * 1000);
-        }
-        else if (this->user_memory_tab->mem_tab_items.size() > 1)
-        {
-            int y = x % (this->user_memory_tab->mem_tab_items.size() - 1);
-            this->user_memory_tab->memory_recycle(y + 1);
-        }
-    }
+```go
+//将字节流复制到硬盘
+func writeBytesToDisk(sourceBytes []byte) int {
+	// var n = 0
+	blockNum := len(sourceBytes)/64 + 1
+	if len(sourceBytes)%64 == 0 {
+		blockNum--
+	}
+	for i := 0; i < blockNum; i++ {
+		availableFatAddress := getAvailableFatAddress()
+		diskBlock := disk.DiskData[availableFatAddress : availableFatAddress+64]
+		diskBlockBuffer := bytes.NewBuffer(diskBlock)
+		limit := Min(len(sourceBytes), (i+1)*64)
+		n, err := diskBlockBuffer.Write(sourceBytes[i*64 : limit])
+		if err != nil {
+			fmt.Println("写入硬盘失败")
+		}
+		fmt.Println("写入", n, "字节")
+	}
+
+	return 0
 }
 ```
 
-### 进程挂起
-进程挂起后空闲时间内存拼接, 提高空间利用率
-```C++
-void Controller::handle_process_sleep()
-{
-    cout << "进程挂起, 空闲时间完成拼接" << endl;
-    this->user_memory_tab->memory_degap();
+### 进入
+1. 全局变量保存当前的目录
+2. 需要显示,文件时以此为工作目录
+
+```go
+func (iNode *INode) cd(dir INode) {
+	disk.CurDir = dir.name
+	fmt.Println("进入目录: ", dir.name)
 }
 ```
 
-## 内存回收
-根据内存块ID回收内存, 更新内存表.
-```C++
-//输入需回收内存表索引
-void MemTab::memory_recycle(uint memory_item_index)
-{
-    if (memory_item_index == 0)
-    {
-        cout << "0 内存不允许回收" << endl; //保证数据表不为空, 以免引发指针错误
-    }
-    MemTabItem new_mem_tab_item = mem_tab_items[memory_item_index];
-    cout << "回收内存ID: " << new_mem_tab_item.mem_tab_item_ID << " 内存首地址: " << new_mem_tab_item.begin_ptr << endl;
-    mem_tab_items.erase(mem_tab_items.begin() + memory_item_index);
+### 重命名
+1. 解析字节流
+2. 修改字节块的前16个字节
+
+```go
+func (iNode *INode) rename(newName string) {
+	bytes.NewBuffer(iNode.fileBytes[:16]).Write([]byte(newName))
+	fmt.Println("    重命名文件: ", iNode.name, "to ", newName)
 }
 ```
 
-## 性能指标分析
-### 平均内存利用率
-整体思路: 
-1. 创建子线程
-2. 每秒统计一次当前的内存利用率, 并保存
-3. main函数执行完毕前, 将保存的利用率取平均值.
-```C++
-//统计平均内存利用率
-double statics_mem_utilization_rate(Controller controller)
-{
-    double mem_utilization_rate_average = 0; //平均内存利用率
-    vector<double> mem_utilization_rates;    //一秒内内存利用率数组
-    //每秒计算一次内存利用率, 然后求平均值.
-    while (true)
-    {
-        vector<MemTabItem> mem_tab_items = controller.user_memory_tab->mem_tab_items;
-        int sum = 0;
-        //遍历内存表, 求利用内存和
-        for (int i = 0; i < mem_tab_items.size(); i++)
-        {
-            sum += mem_tab_items[i].mem_tab_item_size;
-        }
-        //求当前内存利用率
-        double mem_utilization_rate = sum / (512 - 128) * pow(2, 20);
-        mem_utilization_rates.push_back(mem_utilization_rate);
-        //休眠1秒
-        sleep(1);
+### 显示
+```go
+func (iNode *INode) toBytes() []byte {
+	iNodeBytes := make([]byte, 0, 64)
+	nameBytes := []byte(iNode.name)
+	nameBytes = nameBytes[:16] //名称保留前16字节
+	iNodeBytes = append(iNodeBytes, nameBytes...)
+	fmt.Println("文件名称: ", string(nameBytes))
+
+	t := new(bytes.Buffer)
+	binary.Write(t, binary.LittleEndian, iNode.createTime) //创建时间8字节, 小端序
+	iNodeBytes = append(iNodeBytes, t.Bytes()...)
+	fmt.Println("创建时间: ", time.Unix(iNode.createTime, 0))
+
+	binary.Write(t, binary.LittleEndian, iNode.accessTime) //访问时间8字节, 小端序
+	iNodeBytes = append(iNodeBytes, t.Bytes()...)
+	fmt.Println("最近访问时间: ", time.Unix(iNode.accessTime, 0))
+
+	binary.Write(t, binary.LittleEndian, iNode.modifyTime) //修改时间8字节, 小端序
+	iNodeBytes = append(iNodeBytes, t.Bytes()...)
+	fmt.Println("最近修改时间: ", time.Unix(iNode.modifyTime, 0))
+
+	binary.Write(t, binary.LittleEndian, iNode.size) //文件大小8字节, 小端序, 定位Byte
+	iNodeBytes = append(iNodeBytes, t.Bytes()...)
+	fmt.Println("文件大小: ", iNode.size)
+    // 如果不是目录则打印文件内容
+    if iNode.size !=0{
+        fmt.Println(string(iNode.fileBytes))
     }
-    //求内存利用率平均值
-    double rates_sum = 0;
-    for (int i = 0; i < mem_utilization_rates.size(); i++)
-    {
-        rates_sum += mem_utilization_rates[i];
-    }
-    return rates_sum / mem_utilization_rates.size();
+	return iNodeBytes
+}
+```
+
+### 删除
+```go
+func (iNode *INode) delete(address int) {
+	disk.FAT1[address] = 0 //fat置0, 当再次申请时覆盖即视为删除
+	fmt.Println("     删除文件: ", string(iNode.name)) 
 }
 ```
