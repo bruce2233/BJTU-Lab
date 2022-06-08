@@ -118,7 +118,7 @@ func (iNode *INode) delete(address int) {
 	fmt.Println("     删除文件: ", "file.txt")
 }
 func (iNode *INode) rename(newName string) {
-	bytes.NewBuffer(iNode.fileBytes[:16]).Write([]byte(newName))
+	// bytes.NewBuffer(iNode.fileBytes[:16]).Write([]byte(newName))
 	fmt.Println("    重命名文件: ", iNode.name, "to ", newName)
 }
 

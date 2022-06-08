@@ -27,7 +27,7 @@ func TestFat(t *testing.T) {
 	iNode.toBytes()
 	writeBytesToDisk(file2.fileBytes)
 	iNode.show()
-	iNode.rename()
+	iNode.rename("file.txt")
 	iNode.delete(0)
 }
 
