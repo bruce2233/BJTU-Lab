@@ -163,6 +163,9 @@ func (iNode *INode) rename(newName string) {
 ```
 
 ### 显示
+- 输出iNode的基本属性
+- 当iNode为文件输出内容, 大文件同样适用
+- 当iNode为目录时,输出目录内的文件信息
 ```go
 func (iNode *INode) toBytes() []byte {
 	iNodeBytes := make([]byte, 0, 64)
@@ -202,3 +205,21 @@ func (iNode *INode) delete(address int) {
 	fmt.Println("     删除文件: ", string(iNode.name)) 
 }
 ```
+
+### 重定向
+- 文件特有, 大文件同样适用
+- 重新设定输出字节数组
+- 当标志为0时输出到终端
+```go
+func Redirect(sourceBytes []byte, fileName string) {
+	file, err := os.OpenFile(fileName, os.O_RDWR, os.ModePerm)
+	if err != nil {
+		fmt.Println("file open err!")
+	}
+	file.Write(sourceBytes)
+}
+```
+
+## 虚拟机互通测试
+本实验运行在真实主机, 测试通过
+
