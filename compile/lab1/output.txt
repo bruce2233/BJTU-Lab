@@ -1,17 +1,13 @@
+    : SPACE;
 void: IDENTIFIER;
  : SPACE;
 main: IDENTIFIER;
- : SPACE;
-my_word: IDENTIFIER;
+(: SINGLEDELIMITER;
+): SINGLEDELIMITER;
+{: SINGLEDELIMITER;
 
-: SPACE;
-!=: NE;
+    : SPACE;
+int: IDENTIFIER;
  : SPACE;
-/: SLASH;
-
-: SPACE;
-//你好 , 0p
-: COMMENT;
-/* 
-fa
-fa*/: COMMENT;
+num1: IDENTIFIER;
+ : SPACE;

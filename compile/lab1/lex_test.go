@@ -24,10 +24,9 @@ func TestReg(t *testing.T) {
 }
 
 func TestReservedWords(t *testing.T) {
-	context, err := ioutil.ReadFile("rule.txt")
+	_, err := ioutil.ReadFile("rule.txt")
 	if err != nil {
 		t.Log("error!")
 	}
-
 
 }

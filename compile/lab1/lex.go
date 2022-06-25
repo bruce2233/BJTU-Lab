@@ -12,17 +12,17 @@ func scan() {
 	// context := []byte("abc 12 d34 {")
 	// token := []string{"IDENTIFIER"}
 	// var context []byte
-	ruleByte, err := ioutil.ReadFile("rule.json")
+	ruleByte, err := ioutil.ReadFile("rule.json") //打开json文件
 	if err != nil {
 		fmt.Println("open rule.json err")
 	}
 	var rule Rule
-	err = json.Unmarshal(ruleByte, &rule)
+	err = json.Unmarshal(ruleByte, &rule) //解析json格式
 	if err != nil {
 		fmt.Println("unmarshal json err")
 	}
 	var tokensCompiled []TokenCompiled
-	for _, item := range rule.Tokens {
+	for _, item := range rule.Tokens { //将正则表达式和对应的token名称保存
 		fmt.Println(item.ExpStr)
 		exp := regexp.MustCompile(item.ExpStr)
 		tokenCompiled := TokenCompiled{item, *exp}
@@ -32,11 +32,11 @@ func scan() {
 	lexScanner.TokensCompiled = tokensCompiled
 	lexScanner.pos = 0
 
-	context, err := ioutil.ReadFile("input.txt")
+	context, err := ioutil.ReadFile("input.txt") //读取输入串
 	if err != nil {
 		fmt.Println("read file error!")
 	}
-	err = ioutil.WriteFile("output.txt", []byte{}, 0777)
+	err = ioutil.WriteFile("output.txt", []byte{}, 0777) //打印输出二元式序列组
 	outPutFile, err := os.OpenFile("output.txt", os.O_RDWR, 0777)
 	if err != nil {
 		fmt.Println("open output err")
@@ -87,20 +87,20 @@ func (lexScanner *LexScanner) replaceReservedWord(reservedWords *[]string) {
 }
 
 type TokenMatchText struct {
-	TokenName string
-	text      []byte
+	TokenName string //单词名称
+	text      []byte //匹配到的输入串
 }
 
 type Rule struct {
-	Tokens        []Token  `json:"tokens"`
-	ReservedWords []string `json:"reservedWords"`
+	Tokens        []Token  `json:"tokens"`        //单词token结构体数组
+	ReservedWords []string `json:"reservedWords"` //保留字
 }
 type Token struct {
-	ExpStr    string `json:"expStr"`
-	TokenName string `json:"token"`
+	ExpStr    string `json:"expStr"` //单词的正则表达式
+	TokenName string `json:"token"`  //单词的名称
 }
 
 type TokenCompiled struct {
-	Token
-	ExpCompiled regexp.Regexp
+	Token                     //单词token
+	ExpCompiled regexp.Regexp //编译过的正则表达式
 }
