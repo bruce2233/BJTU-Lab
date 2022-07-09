@@ -326,6 +326,7 @@ type Rule struct {
 	Tokens        []Token  `json:"tokens"`        //单词token结构体数组
 	ReservedWords []string `json:"reservedWords"` //保留字
 }
+
 type Token struct {
 	ExpStr    string `json:"expStr"` //单词的正则表达式
 	TokenName string `json:"token"`  //单词的名称
