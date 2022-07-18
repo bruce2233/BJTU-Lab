@@ -11,7 +11,6 @@ func TestScan(t *testing.T) {
 	t.Log("testing...")
 	scan()
 }
-
 func TestReg(t *testing.T) {
 	s := []byte("/* \nad*/")
 	re := regexp.MustCompile("\\A/\\*[\\s\\S]*\\*/")
